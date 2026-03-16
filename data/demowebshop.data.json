@@ -1,0 +1,22 @@
+[
+  {
+    "email": "eimanteras+demo@gmail.com",
+    "password": "Password123!",
+    "firstName": "Eimantas",
+    "lastName": "Testas",
+    "registerIfMissing": true,
+    "searchTerm": "computing",
+    "productName": "Computing and Internet",
+    "quantity": 1
+  },
+  {
+    "email": "eimanteras+demo2@gmail.com",
+    "password": "Password123!",
+    "firstName": "Eimantas",
+    "lastName": "Testas",
+    "registerIfMissing": true,
+    "searchTerm": "laptop",
+    "productName": "14.1-inch Laptop",
+    "quantity": 1
+  }
+]
