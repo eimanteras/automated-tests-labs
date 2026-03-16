@@ -1,0 +1,35 @@
+name: Scheduled Playwright Tests
+
+on:
+  schedule:
+    - cron: "0 20 * * *"   # kasdien 20:00 Lietuvos laiku (18:00 UTC)
+  workflow_dispatch:        # leidžia paleisti rankiniu būdu
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: playwright-report
