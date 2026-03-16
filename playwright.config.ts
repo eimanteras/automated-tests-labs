@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    headless: false,
+    headless: true,
     baseURL: 'https://demowebshop.tricentis.com',
   },
 });
