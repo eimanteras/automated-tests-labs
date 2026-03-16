@@ -2,8 +2,8 @@ name: Scheduled Playwright Tests
 
 on:
   schedule:
-    - cron: "0 20 * * *"   # kasdien 20:00 Lietuvos laiku (18:00 UTC)
-  workflow_dispatch:        # leidžia paleisti rankiniu būdu
+    - cron: "45 18 * * *"   # 20:45 LT time
+  workflow_dispatch:
 
 jobs:
   test:
@@ -27,9 +27,9 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
 
-      - name: Upload Test Results
+      - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: playwright-report
           path: playwright-report
