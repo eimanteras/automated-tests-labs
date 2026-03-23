@@ -6,13 +6,15 @@ on:
 jobs:
   gmail-newman:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 18
 
@@ -38,6 +40,11 @@ jobs:
             throw "Missing secret: GMAIL_REFRESH_TOKEN"
           }
 
+      - name: Prepare report directory
+        shell: pwsh
+        run: |
+          New-Item -Path "test-results/newman-gmail" -ItemType Directory -Force | Out-Null
+
       - name: Run Gmail Newman tests (Option B)
         shell: pwsh
         env:
@@ -52,7 +59,8 @@ jobs:
 
       - name: Upload Gmail Newman HTML report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: gmail-newman-report
           path: test-results/newman-gmail
+          if-no-files-found: warn
