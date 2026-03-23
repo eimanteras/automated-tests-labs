@@ -24,20 +24,20 @@ jobs:
       - name: Validate required secrets
         shell: pwsh
         env:
-          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
-          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
-          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GMAIL_OAUTH_REFRESH_TOKEN: ${{ secrets.GMAIL_OAUTH_REFRESH_TOKEN }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:GMAIL_CLIENT_ID)) {
-            throw "Missing secret: GMAIL_CLIENT_ID"
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_OAUTH_CLIENT_ID)) {
+            throw "Missing secret: GMAIL_OAUTH_CLIENT_ID"
           }
 
-          if ([string]::IsNullOrWhiteSpace($env:GMAIL_CLIENT_SECRET)) {
-            throw "Missing secret: GMAIL_CLIENT_SECRET"
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_OAUTH_CLIENT_SECRET)) {
+            throw "Missing secret: GMAIL_OAUTH_CLIENT_SECRET"
           }
 
-          if ([string]::IsNullOrWhiteSpace($env:GMAIL_REFRESH_TOKEN)) {
-            throw "Missing secret: GMAIL_REFRESH_TOKEN"
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_OAUTH_REFRESH_TOKEN)) {
+            throw "Missing secret: GMAIL_OAUTH_REFRESH_TOKEN"
           }
 
       - name: Prepare report directory
@@ -48,14 +48,14 @@ jobs:
       - name: Run Gmail Newman tests (Option B)
         shell: pwsh
         env:
-          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
-          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
-          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GMAIL_OAUTH_REFRESH_TOKEN: ${{ secrets.GMAIL_OAUTH_REFRESH_TOKEN }}
         run: |
           ./scripts/run-newman-gmail.ps1 `
-            -ClientId "$env:GMAIL_CLIENT_ID" `
-            -ClientSecret "$env:GMAIL_CLIENT_SECRET" `
-            -RefreshToken "$env:GMAIL_REFRESH_TOKEN"
+            -ClientId "$env:GMAIL_OAUTH_CLIENT_ID" `
+            -ClientSecret "$env:GMAIL_OAUTH_CLIENT_SECRET" `
+            -RefreshToken "$env:GMAIL_OAUTH_REFRESH_TOKEN"
 
       - name: Upload Gmail Newman HTML report
         if: always()
