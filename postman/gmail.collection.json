@@ -1,21 +1,25 @@
 {
   "info": {
-    "name": "Gmail API Smoke",
+    "name": "Gmail API - Label Flow",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Minimal Gmail API smoke test using OAuth access token from script"
+    "description": "Exercise 2.1 scenario: send email, create label, add label to sent message, list messages by label, and cleanup"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{gmail_access_token}}",
+        "type": "string"
+      }
+    ]
   },
   "item": [
     {
-      "name": "Get Gmail Profile",
+      "name": "1. Preconditions - Get Profile and Generate Test Data",
       "request": {
         "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer {{gmail_access_token}}",
-            "type": "text"
-          }
-        ],
+        "header": [],
         "url": {
           "raw": "{{gmail_base_url}}/users/me/profile",
           "host": [
@@ -30,6 +34,19 @@
       },
       "event": [
         {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const runId = Date.now().toString();",
+              "pm.variables.set('run_id_local', runId);",
+              "pm.environment.set('label_name', `autotest-label-${runId}`);",
+              "pm.environment.set('test_subject', `Autotest subject ${runId}`);",
+              "pm.environment.set('test_body', `Autotest body ${runId}`);"
+            ]
+          }
+        },
+        {
           "listen": "test",
           "script": {
             "type": "text/javascript",
@@ -41,6 +58,355 @@
               "const json = pm.response.json();",
               "pm.test(\"emailAddress exists\", function () {",
               "  pm.expect(json.emailAddress).to.be.a(\"string\");",
+              "});",
+              "",
+              "pm.test(\"two variable scopes are used\", function () {",
+              "  pm.expect(pm.variables.get('run_id_local')).to.be.a('string');",
+              "  pm.expect(pm.environment.get('label_name')).to.include('autotest-label-');",
+              "});",
+              "",
+              "pm.environment.set('gmail_mail_from', json.emailAddress);",
+              "pm.environment.set('gmail_mail_to', json.emailAddress);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Send Email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"raw\": \"{{message_raw_base64url}}\"\n}"
+        },
+        "url": {
+          "raw": "{{gmail_base_url}}/users/me/messages/send",
+          "host": [
+            "{{gmail_base_url}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "messages",
+            "send"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const from = pm.environment.get('gmail_mail_from');",
+              "const to = pm.environment.get('gmail_mail_to');",
+              "const subject = pm.environment.get('test_subject');",
+              "const body = pm.environment.get('test_body');",
+              "const message = `From: ${from}\\nTo: ${to}\\nSubject: ${subject}\\n\\n${body}`;",
+              "const base64 = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(message));",
+              "const base64url = base64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/g, '');",
+              "pm.environment.set('message_raw_base64url', base64url);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test(\"message id and thread id exist\", function () {",
+              "  pm.expect(json.id).to.be.a(\"string\");",
+              "  pm.expect(json.threadId).to.be.a(\"string\");",
+              "});",
+              "",
+              "pm.environment.set('sent_message_id', json.id);",
+              "pm.environment.set('sent_thread_id', json.threadId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Create Label",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{label_name}}\",\n  \"labelListVisibility\": \"labelShow\",\n  \"messageListVisibility\": \"show\"\n}"
+        },
+        "url": {
+          "raw": "{{gmail_base_url}}/users/me/labels",
+          "host": [
+            "{{gmail_base_url}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "labels"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test(\"label id exists and name matches\", function () {",
+              "  pm.expect(json.id).to.be.a(\"string\");",
+              "  pm.expect(json.name).to.eql(pm.environment.get('label_name'));",
+              "});",
+              "",
+              "pm.environment.set('created_label_id', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Add Label To Sent Email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"addLabelIds\": [\"{{created_label_id}}\"],\n  \"removeLabelIds\": []\n}"
+        },
+        "url": {
+          "raw": "{{gmail_base_url}}/users/me/messages/{{sent_message_id}}/modify",
+          "host": [
+            "{{gmail_base_url}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "messages",
+            "{{sent_message_id}}",
+            "modify"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test(\"label was added to message\", function () {",
+              "  pm.expect(json.id).to.eql(pm.environment.get('sent_message_id'));",
+              "  pm.expect(json.labelIds).to.include(pm.environment.get('created_label_id'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. List Emails With New Label",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{gmail_base_url}}/users/me/messages?labelIds={{created_label_id}}&maxResults=20",
+          "host": [
+            "{{gmail_base_url}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "messages"
+          ],
+          "query": [
+            {
+              "key": "labelIds",
+              "value": "{{created_label_id}}"
+            },
+            {
+              "key": "maxResults",
+              "value": "20"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "const messages = json.messages || [];",
+              "pm.test(\"list with new label returns at least one message\", function () {",
+              "  pm.expect(messages.length).to.be.greaterThan(0);",
+              "});",
+              "",
+              "pm.test(\"list contains the sent message\", function () {",
+              "  const sentId = pm.environment.get('sent_message_id');",
+              "  pm.expect(messages.some(m => m.id === sentId)).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Postcondition - Remove Label From Sent Email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"addLabelIds\": [],\n  \"removeLabelIds\": [\"{{created_label_id}}\"]\n}"
+        },
+        "url": {
+          "raw": "{{gmail_base_url}}/users/me/messages/{{sent_message_id}}/modify",
+          "host": [
+            "{{gmail_base_url}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "messages",
+            "{{sent_message_id}}",
+            "modify"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test(\"label was removed from message\", function () {",
+              "  pm.expect(json.id).to.eql(pm.environment.get('sent_message_id'));",
+              "  pm.expect(json.labelIds).to.not.include(pm.environment.get('created_label_id'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Postcondition - Delete Created Label",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{gmail_base_url}}/users/me/labels/{{created_label_id}}",
+          "host": [
+            "{{gmail_base_url}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "labels",
+            "{{created_label_id}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"delete label response is empty\", function () {",
+              "  pm.expect(pm.response.text()).to.eql('');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Postcondition - Move Sent Email To Trash",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{gmail_base_url}}/users/me/messages/{{sent_message_id}}/trash",
+          "host": [
+            "{{gmail_base_url}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "messages",
+            "{{sent_message_id}}",
+            "trash"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test(\"message moved to trash\", function () {",
+              "  pm.expect(json.id).to.eql(pm.environment.get('sent_message_id'));",
+              "  pm.expect(json.labelIds).to.include('TRASH');",
               "});"
             ]
           }

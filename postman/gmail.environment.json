@@ -13,6 +13,60 @@
       "value": "",
       "type": "secret",
       "enabled": true
+    },
+    {
+      "key": "gmail_mail_from",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "gmail_mail_to",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "test_subject",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "test_body",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "label_name",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "message_raw_base64url",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "sent_message_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "sent_thread_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "created_label_id",
+      "value": "",
+      "type": "default",
+      "enabled": true
     }
   ],
   "_postman_variable_scope": "environment",
