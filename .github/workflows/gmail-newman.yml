@@ -1,0 +1,58 @@
+name: Gmail Newman Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  gmail-newman:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required secrets
+        shell: pwsh
+        env:
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_CLIENT_ID)) {
+            throw "Missing secret: GMAIL_CLIENT_ID"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_CLIENT_SECRET)) {
+            throw "Missing secret: GMAIL_CLIENT_SECRET"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_REFRESH_TOKEN)) {
+            throw "Missing secret: GMAIL_REFRESH_TOKEN"
+          }
+
+      - name: Run Gmail Newman tests (Option B)
+        shell: pwsh
+        env:
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+        run: |
+          ./scripts/run-newman-gmail.ps1 `
+            -ClientId "$env:GMAIL_CLIENT_ID" `
+            -ClientSecret "$env:GMAIL_CLIENT_SECRET" `
+            -RefreshToken "$env:GMAIL_REFRESH_TOKEN"
+
+      - name: Upload Gmail Newman HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmail-newman-report
+          path: test-results/newman-gmail

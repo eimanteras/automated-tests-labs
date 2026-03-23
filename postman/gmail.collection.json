@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "Gmail API Smoke",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Minimal Gmail API smoke test using OAuth access token from script"
+  },
+  "item": [
+    {
+      "name": "Get Gmail Profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{gmail_access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{gmail_base_url}}/users/me/profile",
+          "host": [
+            "{{gmail_base_url}}"
+          ],
+          "path": [
+            "users",
+            "me",
+            "profile"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "const json = pm.response.json();",
+              "pm.test(\"emailAddress exists\", function () {",
+              "  pm.expect(json.emailAddress).to.be.a(\"string\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "gmail_base_url",
+      "value": "https://gmail.googleapis.com/gmail/v1"
+    }
+  ]
+}
