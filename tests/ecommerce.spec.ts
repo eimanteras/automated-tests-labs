@@ -2,6 +2,11 @@ import { test, expect } from '@playwright/test';
 
 const PRICE_THRESHOLD = 5; // Books category threshold
 
+function extractCartCount(cartLabel: string): number {
+  const match = cartLabel.match(/\((\d+)\)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
 test('TC-001: Add items above price threshold to cart', async ({ page }) => {
   // Open home page
   await page.goto('/');
@@ -30,10 +35,13 @@ await page.goto('/');
 
   // Navigate to Books category
   await page.locator('ul.top-menu a[href="/books"]').first().click();
+  await expect(page).toHaveURL(/\/books/);
 
   // Collect products using .item-box (correct selector for Books)
   const productItems = page.locator('.item-box');
   const count = await productItems.count();
+  expect(count).toBeGreaterThan(0);
+
   const selectedIndexes: number[] = [];
 
   for (let i = 0; i < count; i++) {
@@ -52,13 +60,33 @@ await page.goto('/');
     }
   }
 
-  // Add at least two items
-  for (let i = 0; i < Math.min(2, selectedIndexes.length); i++) {
+  // Add up to two items and verify cart count increases after each add.
+  const itemsToAdd = Math.min(2, selectedIndexes.length);
+  expect(itemsToAdd).toBeGreaterThan(0);
+
+  for (let i = 0; i < itemsToAdd; i++) {
+    const cartLabelBefore = await page.getByRole('link', { name: /Shopping cart \(/ }).innerText();
+    const cartCountBefore = extractCartCount(cartLabelBefore);
+
     const idx = selectedIndexes[i];
     await productItems
       .nth(idx)
       .getByRole('button', { name: 'Add to cart' })
       .click();
+
+    await expect(page.locator('#bar-notification')).toContainText('The product has been added to your shopping cart');
+    await expect
+      .poll(async () => {
+        const cartLabelAfter = await page.getByRole('link', { name: /Shopping cart \(/ }).innerText();
+        return extractCartCount(cartLabelAfter);
+      })
+      .toBeGreaterThan(cartCountBefore);
+
+    // Reset page state between adds to avoid notification overlap with next button click.
+    if (i < itemsToAdd - 1) {
+      await page.goto('/books');
+      await expect(page).toHaveURL(/\/books/);
+    }
   }
 
   // Go to cart
