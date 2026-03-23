@@ -8,7 +8,7 @@ on:
 jobs:
   newman-gmail:
     runs-on: ubuntu-latest
-    if: ${{ secrets.GMAIL_OAUTH_TOKEN != '' }}
+    if: ${{ secrets.GMAIL_OAUTH_CLIENT_ID != '' && secrets.GMAIL_OAUTH_CLIENT_SECRET != '' && secrets.GMAIL_OAUTH_REFRESH_TOKEN != '' }}
 
     steps:
       - name: Checkout repo
@@ -25,11 +25,31 @@ jobs:
       - name: Prepare report directory
         run: mkdir -p test-results/newman
 
+      - name: Get OAuth access token from refresh token
+        id: oauth
+        run: |
+          TOKEN_RESPONSE=$(curl -sS -X POST https://oauth2.googleapis.com/token \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "client_id=${{ secrets.GMAIL_OAUTH_CLIENT_ID }}" \
+            -d "client_secret=${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}" \
+            -d "refresh_token=${{ secrets.GMAIL_OAUTH_REFRESH_TOKEN }}" \
+            -d "grant_type=refresh_token")
+
+          ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | python -c "import sys, json; print(json.load(sys.stdin).get('access_token',''))")
+
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "Failed to get access_token"
+            echo "$TOKEN_RESPONSE"
+            exit 1
+          fi
+
+          echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+
       - name: Run Gmail API collection with Newman
         run: |
           newman run postman/gmail-automation.postman_collection.json \
             -e postman/gmail-automation.postman_environment.json \
-            --env-var "oauthToken=${{ secrets.GMAIL_OAUTH_TOKEN }}" \
+            --env-var "oauthToken=${{ steps.oauth.outputs.access_token }}" \
             --env-var "mailFrom=${{ secrets.GMAIL_MAIL_FROM }}" \
             --env-var "mailTo=${{ secrets.GMAIL_MAIL_TO }}" \
             --reporters cli,json,htmlextra \

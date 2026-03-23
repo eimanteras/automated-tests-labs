@@ -63,6 +63,8 @@ Project: `automated-tests-labs`
 ## Notes
 - Gmail API execution requires valid OAuth token and Gmail account secrets.
 - Configure repo secrets before enabling scheduled Newman workflow:
-  - `GMAIL_OAUTH_TOKEN`
+  - `GMAIL_OAUTH_CLIENT_ID`
+  - `GMAIL_OAUTH_CLIENT_SECRET`
+  - `GMAIL_OAUTH_REFRESH_TOKEN`
   - `GMAIL_MAIL_FROM`
   - `GMAIL_MAIL_TO`
