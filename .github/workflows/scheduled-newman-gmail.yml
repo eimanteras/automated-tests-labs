@@ -1,0 +1,44 @@
+name: Scheduled Newman Gmail Tests
+
+on:
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  newman-gmail:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.GMAIL_OAUTH_TOKEN != '' }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Newman
+        run: npm install -g newman newman-reporter-htmlextra
+
+      - name: Prepare report directory
+        run: mkdir -p test-results/newman
+
+      - name: Run Gmail API collection with Newman
+        run: |
+          newman run postman/gmail-automation.postman_collection.json \
+            -e postman/gmail-automation.postman_environment.json \
+            --env-var "oauthToken=${{ secrets.GMAIL_OAUTH_TOKEN }}" \
+            --env-var "mailFrom=${{ secrets.GMAIL_MAIL_FROM }}" \
+            --env-var "mailTo=${{ secrets.GMAIL_MAIL_TO }}" \
+            --reporters cli,json,htmlextra \
+            --reporter-json-export test-results/newman/newman-report.json \
+            --reporter-htmlextra-export test-results/newman/newman-report.html
+
+      - name: Upload Newman reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-gmail-report
+          path: test-results/newman

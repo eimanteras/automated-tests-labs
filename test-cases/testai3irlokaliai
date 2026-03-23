@@ -1,0 +1,95 @@
+# Automated Test Cases (Local Suite)
+
+## TC-HP-001: Home Page Opens
+- Source: `tests/home-page.spec.ts`
+- Priority: High
+- Preconditions: Internet access, target site reachable.
+- Steps:
+1. Open `/` (Demo Web Shop home page).
+2. Verify browser title contains `Demo Web Shop`.
+- Expected Result: Home page loads, title assertion passes.
+
+## TC-EC-001: E-commerce Books Flow With Price Threshold
+- Source: `tests/ecommerce.spec.ts`
+- Priority: High
+- Preconditions: Valid test account exists.
+- Steps:
+1. Open home page and log in.
+2. Open cart and remove existing items.
+3. Navigate to `Books` category.
+4. Find products with `Add to cart` and price above threshold.
+5. Add at least two products.
+6. Open cart and validate line subtotal math and grand subtotal.
+7. Accept terms and proceed to checkout.
+8. Log out.
+- Expected Result: Selected products are added, totals are consistent, checkout page is reachable.
+
+## TC-T21-001: E-commerce Dynamic Selection + Checkout Entry
+- Source: `tests/Task2.1.spec.ts`
+- Priority: High
+- Preconditions: Valid test account exists.
+- Steps:
+1. Log in and clear cart.
+2. Open `Books`.
+3. Dynamically select products where price > threshold.
+4. Add first 2 matching products to cart.
+5. Update quantity for one item.
+6. Validate unit price, line totals, and subtotal arithmetic.
+7. Accept terms and click `Checkout`.
+8. Log out.
+- Expected Result: Cart contains selected items only, calculations are correct, checkout is displayed.
+
+## TC-T22-001: DemoQA Web Tables Pagination And Deletion
+- Source: `tests/Task2.2.spec.ts`
+- Priority: Medium
+- Preconditions: DemoQA site reachable.
+- Steps:
+1. Open DemoQA home page.
+2. Navigate to `Elements -> Web Tables`.
+3. Add 10 records via modal form.
+4. Verify pagination shows more than one page.
+5. Move to next page and validate `Page 2` state.
+6. Delete first visible record.
+7. Verify pagination returns to single page.
+- Expected Result: Records are added and removed correctly; pagination updates accordingly.
+
+## TC-T31-001: DemoQA Progress Bar Synchronization
+- Source: `tests/Task3.1.spec.ts`
+- Priority: Medium
+- Preconditions: DemoQA site reachable.
+- Steps:
+1. Open progress bar page.
+2. Start progress.
+3. Poll until progress starts moving (>0%).
+4. Poll until progress reaches >=40%.
+5. Stop progress.
+6. Verify value does not change after stop.
+- Expected Result: Polling confirms movement and threshold; progress remains stable after stop.
+
+## TC-T32-001: DemoQA Dynamic Properties
+- Source: `tests/Task3.2.spec.ts`
+- Priority: Medium
+- Preconditions: DemoQA site reachable.
+- Steps:
+1. Open dynamic properties page.
+2. Verify delayed enable button is initially disabled.
+3. Wait for delayed enable state.
+4. Poll `colorChange` button class until expected class appears.
+5. Verify delayed visible button appears.
+- Expected Result: Dynamic state transitions occur within timeout and all assertions pass.
+
+## TC-T41-001: Data-Driven Search And Add To Cart
+- Source: `tests/Task4.1.spec.ts`, `data/demowebshop.data.json`
+- Priority: High
+- Preconditions: Dataset rows are valid; network available.
+- Steps:
+1. Iterate through each data row.
+2. Ensure user is logged in (or register if configured).
+3. Ensure cart is empty.
+4. Search by `searchTerm`.
+5. Open exact `productName`.
+6. Set quantity and add to cart.
+7. Verify success notification.
+8. Open cart and validate item + quantity.
+9. Empty cart and log out.
+- Expected Result: Every dataset row executes independently and product/quantity validations pass.

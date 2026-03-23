@@ -31,34 +31,34 @@ await page.goto('/');
   // Navigate to Books category
   await page.locator('ul.top-menu a[href="/books"]').first().click();
 
-  // Collect products using .item-box (correct selector for Books)
+  // Collect products with explicit price extraction to avoid false positives.
   const productItems = page.locator('.item-box');
   const count = await productItems.count();
-  const selectedIndexes: number[] = [];
+  const selectedButtons: Array<ReturnType<typeof page.locator>> = [];
 
   for (let i = 0; i < count; i++) {
     const item = productItems.nth(i);
 
-    // Only items with Add to cart button
-    const hasAddToCart = await item.getByRole('button', { name: 'Add to cart' }).count();
-    if (!hasAddToCart) continue;
+    const addToCart = item.locator('input[value="Add to cart"], button:has-text("Add to cart")').first();
+    if (await addToCart.count() === 0) continue;
 
-    // Extract price
-    const priceText = await item.locator('.prices').innerText();
+    const actualPrice = item.locator('.actual-price').first();
+    if (await actualPrice.count() === 0) continue;
+
+    const priceText = (await actualPrice.innerText()).trim().replace(',', '.');
     const price = parseFloat(priceText.replace(/[^0-9.]/g, ''));
 
-    if (price > PRICE_THRESHOLD) {
-      selectedIndexes.push(i);
+    if (!Number.isNaN(price) && price > PRICE_THRESHOLD) {
+      selectedButtons.push(addToCart);
     }
   }
 
+  expect(selectedButtons.length).toBeGreaterThanOrEqual(2);
+
   // Add at least two items
-  for (let i = 0; i < Math.min(2, selectedIndexes.length); i++) {
-    const idx = selectedIndexes[i];
-    await productItems
-      .nth(idx)
-      .getByRole('button', { name: 'Add to cart' })
-      .click();
+  for (let i = 0; i < 2; i++) {
+    await selectedButtons[i].click();
+    await expect(page.locator('.bar-notification.success')).toContainText(/added to your shopping cart/i);
   }
 
   // Go to cart
@@ -67,7 +67,7 @@ await page.goto('/');
   const cartRows = page.locator('.cart-item-row');
   const rowCount = await cartRows.count();
 
-  // Verification 1: At least 2 items
+  // Verification 1: At least one item was added to cart
   expect(rowCount).toBeGreaterThanOrEqual(1);
 
   // Verification 2–4: Price > threshold + arithmetic subtotal check

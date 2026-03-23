@@ -1,9 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import dataset from '../data/demowebshop.data.json' assert { type: 'json' };
 
-// =======================
-// Types
-// =======================
 type DataRow = {
   email: string;
   password: string;
@@ -15,9 +12,6 @@ type DataRow = {
   quantity?: number;
 };
 
-// =======================
-// Helper functions
-// =======================
 
 async function login(page: Page, email: string, password: string) {
   await page.goto('https://demowebshop.tricentis.com/login');
@@ -46,7 +40,6 @@ async function register(page: Page, data: DataRow) {
 async function ensureLoggedIn(page: Page, data: DataRow) {
   await page.goto('https://demowebshop.tricentis.com/');
 
-  // already logged in?
   if (await page.getByRole('link', { name: 'Log out' }).isVisible().catch(() => false)) {
     return;
   }
@@ -88,18 +81,11 @@ async function logout(page: Page) {
   }
 }
 
-// =======================
-// Test (data-driven)
-// =======================
-
 test.describe('Task 4.1 - Data-driven add to cart', () => {
   for (const row of dataset) {
     const title = `Add "${row.productName}" (qty ${row.quantity ?? 1}) for ${row.email}`;
 
     test(title, async ({ page }) => {
-      // ------------------
-      // Preconditions
-      // ------------------
       await test.step('Ensure user logged in', async () => {
         await ensureLoggedIn(page, row);
       });
@@ -108,11 +94,6 @@ test.describe('Task 4.1 - Data-driven add to cart', () => {
         await emptyCart(page);
       });
 
-      // ------------------
-      // Test Actions
-      // ------------------
-
-      // Search
       await test.step(`Search for "${row.searchTerm}"`, async () => {
         await page.goto('https://demowebshop.tricentis.com/');
         await page.locator('#small-searchterms').fill(row.searchTerm);
@@ -120,14 +101,12 @@ test.describe('Task 4.1 - Data-driven add to cart', () => {
         await expect(page).toHaveURL(/search/);
       });
 
-      // Open product
       await test.step(`Open product "${row.productName}"`, async () => {
         const link = page.getByRole('link', { name: row.productName, exact: true });
         await expect(link).toBeVisible({ timeout: 10000 });
         await link.click();
       });
 
-      // Add to cart
       await test.step('Add product to cart', async () => {
         const qty = String(row.quantity ?? 1);
         const qtyInput = page.locator('input.qty-input');
@@ -152,7 +131,6 @@ test.describe('Task 4.1 - Data-driven add to cart', () => {
         }
       });
 
-      // Verify in cart
       await test.step('Verify product is in cart', async () => {
         await page.getByRole('link', { name: /Shopping cart \(\d+\)/ }).click();
         await expect(page).toHaveURL(/\/cart$/);
@@ -173,9 +151,6 @@ test.describe('Task 4.1 - Data-driven add to cart', () => {
         }
       });
 
-      // ------------------
-      // Postconditions
-      // ------------------
       await test.step('Empty cart', async () => {
         await emptyCart(page);
       });
