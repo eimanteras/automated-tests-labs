@@ -1,0 +1,68 @@
+name: Gmail Newman Tests
+
+on:
+  schedule:
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  gmail-newman:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required secrets
+        shell: pwsh
+        env:
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GMAIL_OAUTH_REFRESH_TOKEN: ${{ secrets.GMAIL_OAUTH_REFRESH_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_OAUTH_CLIENT_ID)) {
+            throw "Missing secret: GMAIL_OAUTH_CLIENT_ID"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_OAUTH_CLIENT_SECRET)) {
+            throw "Missing secret: GMAIL_OAUTH_CLIENT_SECRET"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:GMAIL_OAUTH_REFRESH_TOKEN)) {
+            throw "Missing secret: GMAIL_OAUTH_REFRESH_TOKEN"
+          }
+
+      - name: Prepare report directory
+        shell: pwsh
+        run: |
+          New-Item -Path "test-results/newman-gmail" -ItemType Directory -Force | Out-Null
+
+      - name: Run Gmail Newman tests (Option B)
+        shell: pwsh
+        env:
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GMAIL_OAUTH_REFRESH_TOKEN: ${{ secrets.GMAIL_OAUTH_REFRESH_TOKEN }}
+        run: |
+          ./scripts/run-newman-gmail.ps1 `
+            -ClientId "$env:GMAIL_OAUTH_CLIENT_ID" `
+            -ClientSecret "$env:GMAIL_OAUTH_CLIENT_SECRET" `
+            -RefreshToken "$env:GMAIL_OAUTH_REFRESH_TOKEN"
+
+      - name: Upload Gmail Newman HTML report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: gmail-newman-report
+          path: test-results/newman-gmail
+          if-no-files-found: warn

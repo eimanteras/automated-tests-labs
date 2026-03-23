@@ -362,8 +362,13 @@
           "script": {
             "type": "text/javascript",
             "exec": [
+<<<<<<< HEAD
               "pm.test(\"status is 200 or 204\", function () {",
               "  pm.expect([200, 204]).to.include(pm.response.code);",
+=======
+              "pm.test(\"status is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+>>>>>>> 57d1fbe6406ed95b01310037a4c0c30ca7a34a95
               "});",
               "",
               "pm.test(\"delete label response is empty\", function () {",

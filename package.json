@@ -4,13 +4,19 @@
   "description": "Labs for Design and Development of Automated Tests (Playwright + TypeScript)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "newman:gmail": "powershell -ExecutionPolicy Bypass -File ./scripts/run-newman-gmail.ps1",
+    "newman:gmail:help": "powershell -ExecutionPolicy Bypass -Command \"Get-Help ./scripts/run-newman-gmail.ps1 -Detailed\"",
+    "newman:gmail:option-a": "powershell -ExecutionPolicy Bypass -File ./scripts/run-newman-gmail-option-a.ps1",
+    "newman:gmail:option-a:help": "powershell -ExecutionPolicy Bypass -Command \"Get-Help ./scripts/run-newman-gmail-option-a.ps1 -Detailed\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@types/node": "^25.5.0"
+    "@types/node": "^25.5.0",
+    "newman": "^6.2.1",
+    "newman-reporter-htmlextra": "^1.23.1"
   }
 }
