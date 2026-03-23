@@ -70,9 +70,9 @@ This repository includes a dedicated workflow for Gmail Newman Option B:
 
 ### Required GitHub repository secrets
 
-1. `GMAIL_CLIENT_ID`
-2. `GMAIL_CLIENT_SECRET`
-3. `GMAIL_REFRESH_TOKEN`
+1. `GMAIL_OAUTH_CLIENT_ID`
+2. `GMAIL_OAUTH_CLIENT_SECRET`
+3. `GMAIL_OAUTH_REFRESH_TOKEN`
 
 ### How to run
 
@@ -81,3 +81,41 @@ This repository includes a dedicated workflow for Gmail Newman Option B:
 3. Select branch and run
 
 After completion, download artifact **gmail-newman-report**.
+
+### Schedule
+
+`gmail-newman.yml` also runs on schedule:
+
+- `15 6 * * *` (daily at 06:15 UTC)
+
+## Exercise 2.1 Scenario Coverage (Postman Collection)
+
+Collection `postman/gmail.collection.json` implements:
+
+1. Preconditions: profile lookup + randomized test data generation
+2. Send new email
+3. Create new label
+4. Add created label to sent email
+5. List emails by created label
+6. Postconditions cleanup:
+	- remove label from message
+	- delete created label
+	- move sent message to trash
+
+Notes:
+
+1. Each request includes at least 2 test assertions.
+2. Scripts use at least two variable scopes: `pm.variables` and `pm.environment`.
+
+## Proof Pack For Defense
+
+Show these artifacts to demonstrate full completion:
+
+1. OAuth 2.0 configured in Postman request authorization (screenshot)
+2. Successful local run command and output:
+	- Option B: `npm run newman:gmail -- -ClientId ... -ClientSecret ... -RefreshToken ...`
+3. Newman HTML report from local run:
+	- `test-results/newman-gmail/report.html`
+4. GitHub Actions run for `Gmail Newman Tests` workflow (manual trigger)
+5. Scheduled run evidence in Actions history (cron-triggered run)
+6. Downloaded artifact `gmail-newman-report` from workflow run
