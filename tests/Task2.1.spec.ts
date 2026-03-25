@@ -43,7 +43,10 @@ test('TC-001: Add items above price threshold to cart', async ({ page }) => {
   if (removeCount > 0) {
     await page.getByRole('button', { name: 'Update shopping cart' }).click();
   }
-  await expect(page.getByText(/empty/i)).toBeVisible();
+
+  // Prefer structural checks over brittle text matching for empty cart state.
+  await expect(page.locator('input[name="removefromcart"]')).toHaveCount(0);
+  await expect(page.locator('.order-summary-content')).toContainText(/empty/i);
 
   // 9. Return to homepage
   await page.goto('/');
